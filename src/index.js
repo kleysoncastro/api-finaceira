@@ -25,8 +25,20 @@ app.post("/account", (req, res) => {
         id: uuidv4(),
         statement: []
     })
-    console.log(customers)
-    return res.status(201).send();
+    
+    return res.send();
 })
+
+app.get("/statement/:cpf", (req, res) => {
+
+    const {cpf} = req.params;
+    const customer = customers.find(
+        (customer) => customer.cpf === cpf
+    );
+    if(customer === undefined) {
+        return res.status(400).send({error: "Customer not fund!"})
+    } 
+    return res.json(customer.statement)
+});
 
 app.listen(3333);
