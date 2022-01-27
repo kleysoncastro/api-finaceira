@@ -52,7 +52,28 @@ app.post("/account", (req, res) => {
     })
     
     return res.send();
-})
+});
+
+app.put("/account", verifyIfExisteAccountWhithCPF, (req, res) => {
+    const {name} = req.body;
+    const {customer} = req;
+    customer.name = name;
+
+    return res.status(201).send();
+});
+
+app.get("/account", verifyIfExisteAccountWhithCPF, (req, res) => {
+    const { customer} = req;
+    return res.json(customer);
+});
+
+app.delete("/account", verifyIfExisteAccountWhithCPF, (req, res) => {
+
+    const {cusmoter} = req;
+    customers.splice(customers, 1);
+
+    return res.status(200).json(customers);
+});
 
 app.get("/statement", verifyIfExisteAccountWhithCPF, (req, res) => {
 
@@ -60,6 +81,7 @@ app.get("/statement", verifyIfExisteAccountWhithCPF, (req, res) => {
 
     return res.send(customer.statement);
 });
+
 
 app.post("/statement/date", verifyIfExisteAccountWhithCPF, (req, res) => {
     const {customer} = req;
