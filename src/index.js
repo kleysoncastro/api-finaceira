@@ -20,6 +20,18 @@ function verifyIfExisteAccountWhithCPF(req, res, next) {
       return  next();
 }
 
+function getBalance(statement) {
+    const balance = statement.reduce((acc, operation)=> {
+        if(operation.type === 'credit') {
+            acc + operation.amount;
+        } 
+        if(operation.type === 'debit') {
+            acc - operation.amount;
+        }
+    }, 0);
+    return balance;
+}
+
 app.post("/account", (req, res) => {
     const {cpf, name } = req.body;
 
@@ -42,14 +54,26 @@ app.post("/account", (req, res) => {
     return res.send();
 })
 
-app.get("/statement",verifyIfExisteAccountWhithCPF, (req, res) => {
+app.get("/statement", verifyIfExisteAccountWhithCPF, (req, res) => {
 
     const {customer} = req;
 
     return res.send(customer.statement);
 });
 
-app.post("/deposit",verifyIfExisteAccountWhithCPF, (req, res) => {
+app.post("/statement/date", verifyIfExisteAccountWhithCPF, (req, res) => {
+    const {customer} = req;
+    const {date} = req.query;
+
+    const dateFormat = new Date(date + " 00:00");
+
+    const statement = customer.statement.filter((statement) =>
+        statement.created_at.toDateString() === new Date(dateFormat).toDateString()
+    );
+    return res.send(statement);
+});
+
+app.post("/deposit", verifyIfExisteAccountWhithCPF, (req, res) => {
 
     const {amount, description} = req.body;
 
@@ -65,4 +89,22 @@ app.post("/deposit",verifyIfExisteAccountWhithCPF, (req, res) => {
     return res.status(201).send();
 });
 
+app.post("/withdraw", verifyIfExisteAccountWhithCPF, (req, res) => {
+    const {amount, description} = req.body;
+    const {cusmoter} = req;
+    const balance = getBalance(customer.statement);
+
+    if(balance < amount) {
+        return res.status(400).send({error: "Saldo insuficinte"})
+    }
+    const statementOperation = {
+        description,
+        amount,
+        created_at: new Date(),
+        type: "debit"
+    };
+    customer.statement.push(statementOperation);
+
+    return res.status(201).send();
+})
 app.listen(3333);
